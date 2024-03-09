@@ -1,58 +1,75 @@
-import React from 'react';
-import logo from './logo.svg';
-import { Counter } from './features/counter/Counter';
-import './App.css';
+import React, { useEffect } from "react";
+import Navbar from "./sections/Navbar";
+import Footer from "./sections/Footer";
+import Background from "./components/Background";
+import "./scss/index.scss";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import Search from "./pages/Search";
+import Compare from "./pages/Compare";
+import About from "./pages/About";
+import MyList from "./pages/MyList";
+import Pokemon from "./pages/Pokemon";
+import { ToastContainer, ToastOptions, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { useAppDispatch, useAppSelector } from "./app/hooks";
+import { clearToasts, setUserStatus } from "./app/slices/AppSlice";
+import { onAuthStateChanged } from "firebase/auth";
+import { firebaseAuth } from "./utils/FireBaseConfig";
 
-function App() {
+//to add user pokemons in mylist we have created a reducer
+//called getuserpokemon in reducers folder
+//to remove pokemons from user list we have created a reducer
+//called removepokemonfromuserlist
+function App(){
+
+  const {toasts}=useAppSelector(({app})=>app);
+  const dispatch=useAppDispatch();
+//to remove the google login symbol if user is already logged in
+  useEffect(()=>{
+     onAuthStateChanged(firebaseAuth,(currentUser)=>{
+       if(currentUser){
+        dispatch(setUserStatus({email:currentUser.email}));
+       }
+     });
+  },[dispatch])
+  useEffect(()=>{
+    if(toasts.length)
+    {
+      const toastOptions:ToastOptions={
+        position:"bottom-right",
+        autoClose:2000,
+        pauseOnHover:true,
+        draggable:true,
+        theme:"dark",
+      };
+      toasts.forEach((message:string)=>{
+        toast(message,toastOptions);
+      });
+      dispatch(clearToasts());
+    }
+  },[toasts,dispatch]);
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <Counter />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <span>
-          <span>Learn </span>
-          <a
-            className="App-link"
-            href="https://reactjs.org/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            React
-          </a>
-          <span>, </span>
-          <a
-            className="App-link"
-            href="https://redux.js.org/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Redux
-          </a>
-          <span>, </span>
-          <a
-            className="App-link"
-            href="https://redux-toolkit.js.org/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Redux Toolkit
-          </a>
-          ,<span> and </span>
-          <a
-            className="App-link"
-            href="https://react-redux.js.org/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            React Redux
-          </a>
-        </span>
-      </header>
+    <div className="main-container">
+      <Background/>
+      <BrowserRouter>
+      <div className="app">
+        <Navbar/>
+        <Routes>
+          <Route element={<Search/>} path="/search"/>
+          <Route element={<MyList/>} path="/list"/>
+          <Route element={<About/>} path="/about"/>
+          <Route element={<Compare/>} path="/compare"/>
+          <Route element={<Pokemon/>} path="/pokemon/:id"/>
+          <Route element={<Navigate to="/pokemon/1"/>}path="*"/>
+        </Routes>
+        <Footer/>
+        <ToastContainer/>
+      </div>
+      </BrowserRouter>
+    
     </div>
+    
   );
+  
 }
-
 export default App;
